@@ -1,14 +1,15 @@
-import 'dart:io';
+import 'dart:io';                       // Para manejar archivos de imagen
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
+import 'package:image_picker/image_picker.dart';         // Para seleccionar imágenes de la galería
+import 'package:path_provider/path_provider.dart';      // Para obtener directorios locales
+import 'package:path/path.dart' as path;                // Para manipular rutas de archivos
 
-import '../models/comida.dart';
-import '../db/database_helper.dart';
+import '../models/comida.dart';           // Modelo Comida
+import '../db/database_helper.dart';      // Acceso a la base de datos
 
+/// Pantalla para editar los detalles de una comida existente
 class PantallaEditarComida extends StatefulWidget {
-  final Comida comida;
+  final Comida comida;                   // Recibe la comida a editar
 
   const PantallaEditarComida({super.key, required this.comida});
 
@@ -17,12 +18,14 @@ class PantallaEditarComida extends StatefulWidget {
 }
 
 class _PantallaEditarComidaState extends State<PantallaEditarComida> {
+  // Controladores para los TextFields
   late TextEditingController _tituloController;
   late TextEditingController _descController;
   late TextEditingController _horaController;
 
-  File? _nuevaImagen;
+  File? _nuevaImagen;                    // Para almacenar la nueva imagen seleccionada
 
+  /// Inicializa los controladores con los datos existentes
   @override
   void initState() {
     super.initState();
@@ -32,29 +35,34 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
     _horaController = TextEditingController(text: widget.comida.time);
   }
 
+  /// Función para seleccionar una imagen de la galería
   Future<void> _seleccionarImagen() async {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
 
     if (picked != null) {
       setState(() {
-        _nuevaImagen = File(picked.path);
+        _nuevaImagen = File(picked.path); // Guardamos temporalmente la imagen seleccionada
       });
     }
   }
 
+  /// Guarda los cambios en la base de datos
   Future<void> _guardarCambios() async {
-    String? rutaImagenFinal = widget.comida.imagePath;
+    String? rutaImagenFinal = widget.comida.imagePath; // Ruta original
 
+    // Si se seleccionó una nueva imagen, guardarla en la carpeta de la app
     if (_nuevaImagen != null) {
-      final dir = await getApplicationDocumentsDirectory();
-      final nombreArchivo = '${DateTime.now().millisecondsSinceEpoch}.jpg';
+      final dir = await getApplicationDocumentsDirectory(); // Directorio local
+      final nombreArchivo = '${DateTime.now().millisecondsSinceEpoch}.jpg'; // Nombre único
 
+      // Copiar la imagen al directorio local
       final nueva = await _nuevaImagen!.copy(path.join(dir.path, nombreArchivo));
 
-      rutaImagenFinal = nueva.path;
+      rutaImagenFinal = nueva.path; // Actualizar ruta
     }
 
+    // Crear un objeto Comida actualizado
     final comidaActualizada = Comida(
       id: widget.comida.id,
       title: _tituloController.text,
@@ -64,17 +72,24 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
       imagePath: rutaImagenFinal,
     );
 
+    // Guardar cambios en la base de datos
     await DatabaseHelper.instance.update(comidaActualizada);
 
+    // Volver a la pantalla anterior indicando que hubo cambios
     Navigator.pop(context, true);
   }
 
+  /// Construye la interfaz de la pantalla
   @override
   Widget build(BuildContext context) {
+    // Decidir qué imagen mostrar: la nueva seleccionada o la existente
     final imagenMostrar =
-        _nuevaImagen != null ? _nuevaImagen! : (widget.comida.imagePath != null ? File(widget.comida.imagePath!) : null);
+        _nuevaImagen != null
+            ? _nuevaImagen!
+            : (widget.comida.imagePath != null ? File(widget.comida.imagePath!) : null);
 
     return Scaffold(
+      // Barra superior
       appBar: AppBar(
         title: Text("Editar detalles"),
         leading: BackButton(color: Colors.black),
@@ -82,12 +97,13 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
         elevation: 0,
       ),
 
+      // Contenido principal: formulario de edición
       body: SingleChildScrollView(
         padding: EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Nombre
+            // Campo para el nombre
             Text("Nombre", style: TextStyle(fontWeight: FontWeight.bold)),
             TextField(
               controller: _tituloController,
@@ -95,7 +111,7 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
             ),
             SizedBox(height: 20),
 
-            // Descripción
+            // Campo para la descripción
             Text("Descripción", style: TextStyle(fontWeight: FontWeight.bold)),
             TextField(
               controller: _descController,
@@ -104,7 +120,7 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
             ),
             SizedBox(height: 20),
 
-            // Hora
+            // Campo para la hora
             Text("Hora", style: TextStyle(fontWeight: FontWeight.bold)),
             TextField(
               controller: _horaController,
@@ -112,12 +128,12 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
             ),
             SizedBox(height: 20),
 
-            // Imagen
+            // Campo para la imagen
             Text("Imagen", style: TextStyle(fontWeight: FontWeight.bold)),
             SizedBox(height: 10),
 
             GestureDetector(
-              onTap: _seleccionarImagen,
+              onTap: _seleccionarImagen, // Seleccionar nueva imagen
               child: Container(
                 height: 200,
                 decoration: BoxDecoration(
@@ -134,15 +150,14 @@ class _PantallaEditarComidaState extends State<PantallaEditarComida> {
                       ),
               ),
             ),
-
             SizedBox(height: 40),
 
-            // Botón guardar
+            // Botón para guardar cambios
             SizedBox(
               width: double.infinity,
               height: 55,
               child: ElevatedButton(
-                onPressed: _guardarCambios,
+                onPressed: _guardarCambios, // Llama a la función para guardar
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.black,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),

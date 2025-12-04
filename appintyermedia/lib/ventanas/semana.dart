@@ -1,10 +1,11 @@
-import 'dart:io'; // IMPORTANTE: Para poder mostrar la imagen del archivo
+import 'dart:io'; // Para mostrar imágenes desde archivos locales
 import 'package:flutter/material.dart';
-import '../db/database_helper.dart'; // Tu base de datos
-import '../models/comida.dart'; // Tu modelo (Asegúrate de que la clase Meal ahora se llame Comida)
-import 'dia.dart' hide Comida; // Importamos el archivo dia.dart
-import 'pantalla_recetario.dart'; // Importamos la pantalla del recetario
+import '../db/database_helper.dart'; // Acceso a la base de datos
+import '../models/comida.dart';      // Modelo Comida
+import 'dia.dart' hide Comida;       // Importamos PantallaDetalleDia
+import 'pantalla_recetario.dart';    // Pantalla del recetario
 
+/// Pantalla principal de la app que muestra los días de la semana y un resumen de comidas
 class PantallaPrincipal extends StatefulWidget {
   const PantallaPrincipal({super.key});
 
@@ -13,6 +14,7 @@ class PantallaPrincipal extends StatefulWidget {
 }
 
 class _PantallaPrincipalState extends State<PantallaPrincipal> {
+  // Lista de días de la semana
   final List<String> diasSemana = [
     "Lunes",
     "Martes",
@@ -23,7 +25,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
     "Domingo",
   ];
 
-  // Función para refrescar la lista cuando volvemos de editar
+  /// Refresca la pantalla al volver de editar o agregar comidas
   void _refrescar() {
     setState(() {});
   }
@@ -32,9 +34,11 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Organizador de comidas")),
+
       body: Column(
         children: [
           Expanded(
+            // Lista de días de la semana
             child: ListView.builder(
               padding: EdgeInsets.all(10),
               itemCount: diasSemana.length,
@@ -42,16 +46,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 final nombreDia = diasSemana[index];
                 final numeroDia = index + 1;
 
+                // FutureBuilder para consultar si hay comidas en ese día
                 return FutureBuilder<List<Comida>>(
                   future: DatabaseHelper.instance.readMealsByDay(nombreDia),
-
                   builder: (context, snapshot) {
+                    // Icono o imagen a mostrar en la derecha
                     Widget widgetDerecha = Icon(
                       Icons.arrow_forward_ios,
                       size: 16,
                       color: Colors.grey[300],
                     );
 
+                    // Si hay comidas, mostramos la primera imagen
                     if (snapshot.hasData && snapshot.data!.isNotEmpty) {
                       final comida = snapshot.data!.first;
 
@@ -73,6 +79,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       }
                     }
 
+                    // Card de cada día
                     return Card(
                       margin: EdgeInsets.symmetric(vertical: 8),
                       shape: RoundedRectangleBorder(
@@ -80,6 +87,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                       ),
                       child: InkWell(
                         onTap: () async {
+                          // Navega a la pantalla de detalle del día
                           await Navigator.push(
                             context,
                             MaterialPageRoute(
@@ -87,19 +95,18 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   PantallaDetalleDia(nombreDia: nombreDia),
                             ),
                           );
-                          _refrescar();
+                          _refrescar(); // Refresca al volver
                         },
                         child: Padding(
                           padding: const EdgeInsets.all(16.0),
                           child: Row(
                             children: [
+                              // Círculo con número del día
                               Container(
                                 width: 40,
                                 height: 40,
                                 decoration: BoxDecoration(
-                                  color:
-                                      snapshot.hasData &&
-                                          snapshot.data!.isNotEmpty
+                                  color: snapshot.hasData && snapshot.data!.isNotEmpty
                                       ? Colors.purple
                                       : Colors.purple[50],
                                   shape: BoxShape.circle,
@@ -108,9 +115,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                   child: Text(
                                     "$numeroDia",
                                     style: TextStyle(
-                                      color:
-                                          snapshot.hasData &&
-                                              snapshot.data!.isNotEmpty
+                                      color: snapshot.hasData && snapshot.data!.isNotEmpty
                                           ? Colors.white
                                           : Colors.purple,
                                       fontWeight: FontWeight.bold,
@@ -121,6 +126,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
 
                               SizedBox(width: 15),
 
+                              // Nombre del día y título de la primera comida si existe
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -132,8 +138,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                         fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                    if (snapshot.hasData &&
-                                        snapshot.data!.isNotEmpty)
+                                    if (snapshot.hasData && snapshot.data!.isNotEmpty)
                                       Text(
                                         snapshot.data!.first.title,
                                         style: TextStyle(
@@ -147,6 +152,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                                 ),
                               ),
 
+                              // Imagen o ícono a la derecha
                               widgetDerecha,
                             ],
                           ),
@@ -159,7 +165,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             ),
           ),
 
-          // BOTÓN NUEVO
+          // BOTÓN PARA VER EL RECETARIO
           Padding(
             padding: const EdgeInsets.only(bottom: 20, top: 10),
             child: ElevatedButton(
@@ -172,6 +178,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
                 ),
               ),
               onPressed: () {
+                // Navega a la pantalla del recetario
                 Navigator.push(
                   context,
                   MaterialPageRoute(builder: (context) => PantallaRecetario()),

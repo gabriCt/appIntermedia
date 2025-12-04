@@ -1,17 +1,19 @@
-import 'dart:io';
+import 'dart:io'; // Para manejar imágenes desde archivos locales
 import 'package:flutter/material.dart';
-import '../models/comida.dart';
-import '../db/database_helper.dart';
-import 'pantalla_editar_comida.dart';
+import '../models/comida.dart';           // Modelo Comida
+import '../db/database_helper.dart';      // Acceso a la base de datos
+import 'pantalla_editar_comida.dart';     // Pantalla para editar la comida
 
+/// Pantalla que muestra los detalles completos de una comida
 class PantallaInfoComida extends StatelessWidget {
-  final Comida comida;
+  final Comida comida; // Recibe la comida a mostrar
 
   const PantallaInfoComida({super.key, required this.comida});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      // Barra superior con título
       appBar: AppBar(
         title: Text("Detalles del platillo"),
       ),
@@ -22,16 +24,20 @@ class PantallaInfoComida extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
 
-            // Imagen
+            // IMAGEN DEL PLATILLO
             Center(
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(15),
                 child: comida.imagePath != null
-                    ? Image.file(File(comida.imagePath!), height: 200, fit: BoxFit.cover)
+                    ? Image.file(
+                        File(comida.imagePath!),      // Muestra la imagen si existe
+                        height: 200,
+                        fit: BoxFit.cover,
+                      )
                     : Container(
                         height: 200,
                         width: double.infinity,
-                        color: Colors.grey[300],
+                        color: Colors.grey[300],       // Fondo gris si no hay imagen
                         child: Icon(Icons.fastfood, size: 80, color: Colors.grey[700]),
                       ),
               ),
@@ -39,15 +45,15 @@ class PantallaInfoComida extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // Hora
+            // HORA DEL PLATILLO
             Container(
               padding: EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: Colors.purple[50],
+                color: Colors.purple[50],           // Fondo morado claro
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Text(
-                comida.time,
+                comida.time,                         // Hora (ej. 14:00)
                 style: TextStyle(
                   color: Colors.purple,
                   fontWeight: FontWeight.bold,
@@ -57,7 +63,7 @@ class PantallaInfoComida extends StatelessWidget {
 
             SizedBox(height: 20),
 
-            // Título
+            // NOMBRE DEL PLATILLO
             Text(
               comida.title,
               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
@@ -65,15 +71,15 @@ class PantallaInfoComida extends StatelessWidget {
 
             SizedBox(height: 10),
 
-            // Descripción
+            // DESCRIPCIÓN DEL PLATILLO
             Text(
               comida.descripcion.isEmpty ? "Sin descripción" : comida.descripcion,
               style: TextStyle(fontSize: 16, color: Colors.grey[700]),
             ),
 
-            Spacer(),
+            Spacer(), // Empuja los botones hacia abajo
 
-            // Botones Editar / Eliminar
+            // FILA DE BOTONES: ELIMINAR / EDITAR
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -85,6 +91,7 @@ class PantallaInfoComida extends StatelessWidget {
                   ),
                   child: Text("Eliminar"),
                   onPressed: () async {
+                    // Muestra un diálogo de confirmación antes de eliminar
                     final confirmar = await showDialog<bool>(
                       context: context,
                       builder: (_) => AlertDialog(
@@ -104,8 +111,9 @@ class PantallaInfoComida extends StatelessWidget {
                     );
 
                     if (confirmar == true) {
+                      // Elimina la comida de la base de datos
                       await DatabaseHelper.instance.delete(comida.id!);
-                      Navigator.pop(context, true); // Para refrescar lista
+                      Navigator.pop(context, true); // Regresa y refresca la lista
                     }
                   },
                 ),
@@ -118,6 +126,7 @@ class PantallaInfoComida extends StatelessWidget {
                   ),
                   child: Text("Editar"),
                   onPressed: () async {
+                    // Navega a la pantalla de edición
                     final actualizado = await Navigator.push(
                       context,
                       MaterialPageRoute(
@@ -126,7 +135,7 @@ class PantallaInfoComida extends StatelessWidget {
                     );
 
                     if (actualizado == true) {
-                      Navigator.pop(context, true); // Vuelve y refresca
+                      Navigator.pop(context, true); // Vuelve y refresca la lista
                     }
                   },
                 ),
